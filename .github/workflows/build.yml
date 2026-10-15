@@ -1,4 +1,4 @@
-name: Build Android APK
+name: Build Android APK From Mobile Code
 on:
   repository_dispatch:
     types: [build_apk]
@@ -7,9 +7,6 @@ jobs:
   build:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout Code
-        uses: actions/checkout@v4
-
       - name: Set up Java
         uses: actions/setup-java@v4
         with:
@@ -21,16 +18,23 @@ jobs:
         with:
           channel: 'stable'
 
+      - name: Create Flutter Project Structure
+        run: |
+          flutter create generated_app --org com.example
+          cd generated_app
+          
+      - name: Inject Mobile Source Code
+        run: |
+          # استقبال الكود النصي المولد وحفظه داخل ملف تطبيق الفلاتر الرئيسي
+          echo "${{ github.event.client_payload.code }}" > generated_app/lib/main.dart
+
       - name: Build APK
         run: |
-          if [ -f "pubspec.yaml" ]; then
-            flutter build apk --release
-          else
-            echo "No Flutter project found yet."
-          fi
+          cd generated_app
+          flutter build apk --release
 
       - name: Upload APK to Artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: customer-app-apk
+          path: generated_app/build/app/outputs/flutter-apk/app-release.apk

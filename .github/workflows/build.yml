@@ -1,0 +1,36 @@
+name: Build Android APK
+on:
+  repository_dispatch:
+    types: [build_apk]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+
+      - name: Build APK
+        run: |
+          if [ -f "pubspec.yaml" ]; then
+            flutter build apk --release
+          else
+            echo "No Flutter project found yet."
+          fi
+
+      - name: Upload APK to Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
